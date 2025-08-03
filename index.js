@@ -21,9 +21,34 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
+// CORS configuration - Allow any localhost port during development
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Allow all localhost origins during development
+      if (
+        process.env.NODE_ENV === "development" &&
+        origin.includes("localhost")
+      ) {
+        return callback(null, true);
+      }
+
+      // In production, only allow specific origins
+      const allowedOrigins = [
+        process.env.CLIENT_URL || "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+      ];
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
